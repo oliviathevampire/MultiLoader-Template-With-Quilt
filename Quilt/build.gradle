@@ -1,16 +1,23 @@
 plugins {
-    id 'fabric-loom' version '0.10-SNAPSHOT'
+	id 'fabric-loom' version '0.11-SNAPSHOT'
+	id 'io.github.juuxel.loom-quiltflower' version '1.6.0' // For loom 0.8-0.9, 0.11+
+	id "org.quiltmc.quilt-mappings-on-loom" version "4.0.0"
     id 'maven-publish'
     id 'idea'
 }
 
-archivesBaseName = "${mod_name}-fabric-${minecraft_version}"
+archivesBaseName = "${mod_name}-quilt-${minecraft_version}"
 
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
-    mappings loom.officialMojangMappings()
-    modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
+    mappings loom.layered {
+        it.addLayer(quiltMappings.mappings("org.quiltmc:quilt-mappings:${quilt_mappings}:v2"))
+        it.officialMojangMappings {
+            setNameSyntheticMembers(false)
+        }
+    }
+    modImplementation "org.quiltmc:quilt-loader:${quilt_loader_version}"
+    modImplementation "org.quiltmc.qsl:qsl:${quilt_version}-SNAPSHOT"
     implementation group: 'com.google.code.findbugs', name: 'jsr305', version: '3.0.1'
     implementation project(":Common")
 }
@@ -19,19 +26,19 @@ loom {
     runs {
         client {
             client()
-            setConfigName("Fabric Client")
+            setConfigName("Quilt Client")
             ideConfigGenerated(true)
             runDir("run")
         }
         server {
             server()
-            setConfigName("Fabric Server")
+            setConfigName("Quilt Server")
             ideConfigGenerated(true)
             runDir("run")
         }
         dataClient {
             client()
-            setConfigName("Fabric Client Datagen")
+            setConfigName("Quilt Client Datagen")
             vmArg("-Dfabric-api.datagen")
             vmArg("-Dfabric-api.datagen.output-dir=${file("src/main/generated")}")
             vmArg("-Dfabric-api.datagen.existing-dir=${file("src/main/resources")}")
@@ -42,7 +49,7 @@ loom {
         }
         dataServer {
             server()
-            setConfigName("Fabric Server Datagen")
+            setConfigName("Quilt Server Datagen")
             vmArg("-Dfabric-api.datagen")
             vmArg("-Dfabric-api.datagen.output-dir=${file("src/main/generated")}")
             vmArg("-Dfabric-api.datagen.existing-dir=${file("src/main/resources")}")
@@ -59,7 +66,7 @@ processResources {
     from project(":Common").sourceSets.main.resources
     inputs.property "version", project.version
 
-    filesMatching("fabric.mod.json") {
+    filesMatching("quilt.mod.json") {
         expand "version": project.version
     }
 }
